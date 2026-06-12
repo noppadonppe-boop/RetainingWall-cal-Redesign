@@ -1,7 +1,7 @@
 import { ArrowDown, Droplets, Mountain, Info, Search } from 'lucide-react';
 import { useWallStore } from '../store/useWallStore';
 import { runCalculations } from '../utils/calculationEngine';
-import { WallGraphic } from '../components/WallGraphic';
+import { LoadDiagramSVG } from '../components/LoadDiagramSVG';
 
 export const LoadsView = () => {
   const store = useWallStore();
@@ -179,28 +179,7 @@ export const LoadsView = () => {
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between items-end mb-4">
-                <label className="block label-caps text-slate-500">Unit Weight of Soil (γ)</label>
-              </div>
-              <div className="relative px-2">
-                <input 
-                  type="range" 
-                  name="unitWeight"
-                  min="1500" 
-                  max="2200" 
-                  step="10"
-                  value={store.soilProperties.unitWeight}
-                  onChange={handleSoilChange}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                />
-                <div className="flex justify-between text-xs text-slate-400 mt-2 font-mono">
-                  <span>1500 kg/m³</span>
-                  <span className="text-indigo-600 font-bold text-sm bg-indigo-50 px-2 py-0.5 rounded-full">{store.soilProperties.unitWeight} kg/m³</span>
-                  <span>2200 kg/m³</span>
-                </div>
-              </div>
-            </div>
+
           </div>
 
           {/* Hydrostatic Pressure Card */}
@@ -224,9 +203,7 @@ export const LoadsView = () => {
             {!store.loads.hydrostaticActive && (
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center flex flex-col items-center justify-center">
                 <Info className="w-6 h-6 text-slate-400 mb-3" />
-                <p className="text-slate-500 text-sm max-w-sm">
-                  Hydrostatic pressure is currently disabled. Enable to define water table levels on the active and passive sides of the wall.
-                </p>
+                <p className="text-xs text-slate-500">Backfill density (γ = {store.soilProperties.layers[0]?.unitWeight || 1800} kg/m³) is configured in the Soil Properties menu. Surcharge acts directly on this layer.</p>
               </div>
             )}
             
@@ -253,7 +230,7 @@ export const LoadsView = () => {
               </div>
             </div>
             <div className="flex-1 w-full border border-border-card rounded-2xl flex items-center justify-center relative bg-slate-50 overflow-hidden">
-              <WallGraphic />
+              <LoadDiagramSVG />
             </div>
           </div>
 

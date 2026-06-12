@@ -10,9 +10,21 @@ export interface WallGeometry {
   heelWidth: number;
 }
 
+export interface SoilLayer {
+  id: string;
+  name: string;
+  unitWeight: number; // gamma
+  frictionAngle: number; // phi
+  cohesion: number; // c
+  thickness: number; // meters
+  soilType: string;
+}
+
 export interface SoilProperties {
-  unitWeight: number;
-  internalFrictionAngle: number;
+  layers: SoilLayer[];
+  tensionCrackAssumption: 'ignore_negative' | 'include_negative';
+  layerClipping: 'clip_to_wall' | 'no_clip';
+
   allowableBearingPressure: number;
   frictionCoefficient: number;
   backfillInclination: number;
