@@ -113,11 +113,11 @@ export function runCalculations(state: WallState) {
     const sigma_v_bot = currentSigmaV + (layer.unitWeight * h_i);
     
     // Active pressure at top and bottom (Rankine with cohesion)
-    let pa_top = sigma_v_top * Ka - 2 * layer.cohesion * Math.sqrt(Ka);
-    let pa_bot = sigma_v_bot * Ka - 2 * layer.cohesion * Math.sqrt(Ka);
+    const pa_top = sigma_v_top * Ka - 2 * layer.cohesion * Math.sqrt(Ka);
+    const pa_bot = sigma_v_bot * Ka - 2 * layer.cohesion * Math.sqrt(Ka);
     
     // Tension Crack check
-    let P_layer = 0;
+    let P_layer: number;
     let y_centroid_from_bottom = 0;
 
     if (soilProperties.tensionCrackAssumption === 'ignore_negative') {
@@ -244,13 +244,13 @@ export function runCalculations(state: WallState) {
   // STEM
   // For structural design, we approximate stem pressure using avgKa and a single equivalent density for simplicity
   // or use the precise Pa_stem. Here we approximate:
-  let gamma_avg = soilProperties.layers.length > 0 
+  const gamma_avg = soilProperties.layers.length > 0 
     ? soilProperties.layers.reduce((sum, l) => sum + l.unitWeight*l.thickness, 0) / soilProperties.layers.reduce((sum, l) => sum + l.thickness, 0)
     : 1800;
     
   const Pa_stem = 0.5 * gamma_avg * stemHeight * stemHeight * avgKa;
-  let P_sur_stem = loads.surchargeActive ? loads.surchargeLoad * avgKa * stemHeight : 0;
-  let P_hydro_stem = loads.hydrostaticActive ? 0.5 * gamma_w * stemHeight * stemHeight : 0;
+  const P_sur_stem = loads.surchargeActive ? loads.surchargeLoad * avgKa * stemHeight : 0;
+  const P_hydro_stem = loads.hydrostaticActive ? 0.5 * gamma_w * stemHeight * stemHeight : 0;
   
   const V_u_stem = 1.7 * Pa_stem + 1.7 * P_sur_stem + 1.7 * P_hydro_stem;
   const M_u_stem = 1.7 * (Pa_stem * stemHeight / 3) + 1.7 * (P_sur_stem * stemHeight / 2) + 1.7 * (P_hydro_stem * stemHeight / 3);
@@ -277,7 +277,7 @@ export function runCalculations(state: WallState) {
     V_u_heel = w_u_heel * heel;
     M_u_heel = w_u_heel * heel * heel / 2;
     const d_heel_mm = (baseThickness * 1000) - 50;
-    let As_calc = (M_u_heel * 100) / (phi_f * fy * 0.9 * (d_heel_mm / 10));
+    const As_calc = (M_u_heel * 100) / (phi_f * fy * 0.9 * (d_heel_mm / 10));
     const As_min_heel = 0.0018 * 100 * (baseThickness * 100);
     As_heel = Math.max(As_calc, As_min_heel);
     rebar_heel = selectRebar(As_heel);
@@ -296,7 +296,7 @@ export function runCalculations(state: WallState) {
     V_u_toe = net_q_toe * toe;
     M_u_toe = net_q_toe * toe * toe / 2;
     const d_toe_mm = (baseThickness * 1000) - 50;
-    let As_calc = (M_u_toe * 100) / (phi_f * fy * 0.9 * (d_toe_mm / 10));
+    const As_calc = (M_u_toe * 100) / (phi_f * fy * 0.9 * (d_toe_mm / 10));
     const As_min_toe = 0.0018 * 100 * (baseThickness * 100);
     As_toe = Math.max(As_calc, As_min_toe);
     rebar_toe = selectRebar(As_toe);
@@ -332,3 +332,5 @@ export function runCalculations(state: WallState) {
     }
   };
 }
+
+export type CalculationResults = ReturnType<typeof runCalculations>;

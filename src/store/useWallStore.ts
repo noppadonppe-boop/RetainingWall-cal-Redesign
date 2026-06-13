@@ -1,24 +1,36 @@
 import { create } from 'zustand';
-import type { WallState } from '../types';
+import type {
+  Loads,
+  MaterialProperties,
+  ProjectSections,
+  SoilLayer,
+  SoilProperties,
+  TabType,
+  WallGeometry,
+  WallState,
+} from '../types';
 
-interface WallStore extends WallState {
+export interface WallStore extends WallState {
+  setProjectName: (projectName: string) => void;
   setWallType: (type: WallState['wallType']) => void;
   setLShapeOrientation: (orientation: WallState['lShapeOrientation']) => void;
   setHasShearKey: (hasKey: boolean) => void;
-  setActiveTab: (tab: WallState['activeTab']) => void;
-  updateGeometry: (geometry: Partial<WallState['geometry']>) => void;
-  updateSoilProperties: (properties: Partial<WallState['soilProperties']>) => void;
-  updateLoads: (loads: Partial<WallState['loads']>) => void;
-  updateMaterials: (materials: Partial<WallState['materials']>) => void;
-  
-  // Layer Management
-  updateSoilLayer: (id: string, layer: Partial<import('../types').SoilLayer>) => void;
+  setActiveTab: (tab: TabType) => void;
+  updateGeometry: (geometry: Partial<WallGeometry>) => void;
+  updateSoilProperties: (properties: Partial<SoilProperties>) => void;
+  updateLoads: (loads: Partial<Loads>) => void;
+  updateMaterials: (materials: Partial<MaterialProperties>) => void;
+  updateSoilLayer: (id: string, layer: Partial<SoilLayer>) => void;
   addSoilLayer: () => void;
   removeSoilLayer: (id: string) => void;
+  hydrateState: (state: Partial<WallState>) => void;
+  applyProjectSections: (sections: ProjectSections, projectName?: string) => void;
+  resetState: () => void;
 }
 
-const initialState: WallState = {
+export const initialWallState: WallState = {
   activeTab: 'Geometry',
+  projectName: 'Wall Section A-1',
   wallType: 'T-Shape',
   lShapeOrientation: null,
   hasShearKey: false,
@@ -39,7 +51,7 @@ const initialState: WallState = {
         frictionAngle: 32,
         cohesion: 0,
         thickness: 2.5,
-        soilType: 'Silty Sand (SM)'
+        soilType: 'Silty Sand (SM)',
       },
       {
         id: '2',
@@ -48,8 +60,8 @@ const initialState: WallState = {
         frictionAngle: 0,
         cohesion: 2500,
         thickness: 6.0,
-        soilType: 'High Plasticity Clay (CH)'
-      }
+        soilType: 'High Plasticity Clay (CH)',
+      },
     ],
     tensionCrackAssumption: 'ignore_negative',
     layerClipping: 'clip_to_wall',
@@ -67,61 +79,141 @@ const initialState: WallState = {
     hydrostaticActive: false,
   },
   materials: {
-    concreteCompressiveStrength: 25, // MPa
-    steelYieldStrength: 400, // MPa
+    concreteCompressiveStrength: 25,
+    steelYieldStrength: 400,
   },
 };
 
+const mergeWallState = (state: WallState, incoming: Partial<WallState>): WallState => ({
+  ...state,
+  ...incoming,
+  geometry: {
+    ...state.geometry,
+    ...(incoming.geometry ?? {}),
+  },
+  soilProperties: {
+    ...state.soilProperties,
+    ...(incoming.soilProperties ?? {}),
+    layers: incoming.soilProperties?.layers ?? state.soilProperties.layers,
+  },
+  loads: {
+    ...state.loads,
+    ...(incoming.loads ?? {}),
+  },
+  materials: {
+    ...state.materials,
+    ...(incoming.materials ?? {}),
+  },
+});
+
+export const buildProjectSectionsFromState = (state: WallState): ProjectSections => ({
+  geometryMenu: {
+    wallType: state.wallType,
+    lShapeOrientation: state.lShapeOrientation,
+    hasShearKey: state.hasShearKey,
+    geometry: state.geometry,
+  },
+  soilMenu: state.soilProperties,
+  loadsMenu: state.loads,
+  materialsMenu: state.materials,
+  dashboardMenu: {
+    activeTab: state.activeTab,
+  },
+});
+
+export const buildWallStateFromSections = (
+  sections: ProjectSections,
+  current: WallState = initialWallState,
+  projectName?: string,
+): WallState => ({
+  ...current,
+  ...(projectName ? { projectName } : {}),
+  wallType: sections.geometryMenu.wallType,
+  lShapeOrientation: sections.geometryMenu.lShapeOrientation,
+  hasShearKey: sections.geometryMenu.hasShearKey,
+  geometry: sections.geometryMenu.geometry,
+  soilProperties: sections.soilMenu,
+  loads: sections.loadsMenu,
+  materials: sections.materialsMenu,
+  activeTab: sections.dashboardMenu.activeTab ?? 'Geometry',
+});
+
 export const useWallStore = create<WallStore>((set) => ({
-  ...initialState,
-  setWallType: (type) => set({ wallType: type }),
-  setLShapeOrientation: (orientation) => set({ lShapeOrientation: orientation }),
-  setHasShearKey: (hasKey) => set({ hasShearKey: hasKey }),
-  setActiveTab: (tab) => set({ activeTab: tab }),
+  ...initialWallState,
+  setProjectName: (projectName) => set({ projectName }),
+  setWallType: (wallType) => set({ wallType }),
+  setLShapeOrientation: (lShapeOrientation) => set({ lShapeOrientation }),
+  setHasShearKey: (hasShearKey) => set({ hasShearKey }),
+  setActiveTab: (activeTab) => set({ activeTab }),
   updateGeometry: (geometry) =>
     set((state) => ({ geometry: { ...state.geometry, ...geometry } })),
-  updateSoilProperties: (properties) =>
-    set((state) => ({ soilProperties: { ...state.soilProperties, ...properties } })),
-  updateLoads: (loads) => set((state) => ({ loads: { ...state.loads, ...loads } })),
-  updateMaterials: (materials) =>
-    set((state) => ({ materials: { ...state.materials, ...materials } })),
-    
-  // Layer Management
-  updateSoilLayer: (id, layerUpdates) => 
+  updateSoilProperties: (soilProperties) =>
     set((state) => ({
       soilProperties: {
         ...state.soilProperties,
-        layers: state.soilProperties.layers.map(layer => 
-          layer.id === id ? { ...layer, ...layerUpdates } : layer
-        )
-      }
+        ...soilProperties,
+      },
     })),
-    
-  addSoilLayer: () => 
+  updateLoads: (loads) =>
+    set((state) => ({
+      loads: {
+        ...state.loads,
+        ...loads,
+      },
+    })),
+  updateMaterials: (materials) =>
+    set((state) => ({
+      materials: {
+        ...state.materials,
+        ...materials,
+      },
+    })),
+  updateSoilLayer: (id, layerUpdates) =>
+    set((state) => ({
+      soilProperties: {
+        ...state.soilProperties,
+        layers: state.soilProperties.layers.map((layer) =>
+          layer.id === id ? { ...layer, ...layerUpdates } : layer,
+        ),
+      },
+    })),
+  addSoilLayer: () =>
     set((state) => {
-      const newId = (Math.max(...state.soilProperties.layers.map(l => parseInt(l.id) || 0), 0) + 1).toString();
-      const newLayer = {
-        id: newId,
-        name: `Soil Layer ${newId}`,
-        unitWeight: 1800,
-        frictionAngle: 30,
-        cohesion: 0,
-        thickness: 2.0,
-        soilType: 'New Soil'
-      };
+      const newId = (
+        Math.max(
+          ...state.soilProperties.layers.map((layer) => Number.parseInt(layer.id, 10) || 0),
+          0,
+        ) + 1
+      ).toString();
+
       return {
         soilProperties: {
           ...state.soilProperties,
-          layers: [...state.soilProperties.layers, newLayer]
-        }
+          layers: [
+            ...state.soilProperties.layers,
+            {
+              id: newId,
+              name: `Soil Layer ${newId}`,
+              unitWeight: 1800,
+              frictionAngle: 30,
+              cohesion: 0,
+              thickness: 2.0,
+              soilType: 'New Soil',
+            },
+          ],
+        },
       };
     }),
-    
-  removeSoilLayer: (id) => 
+  removeSoilLayer: (id) =>
     set((state) => ({
       soilProperties: {
         ...state.soilProperties,
-        layers: state.soilProperties.layers.filter(layer => layer.id !== id)
-      }
+        layers: state.soilProperties.layers.filter((layer) => layer.id !== id),
+      },
     })),
+  hydrateState: (incoming) =>
+    set((state) => mergeWallState(state, incoming)),
+  applyProjectSections: (sections, projectName) =>
+    set((state) => buildWallStateFromSections(sections, state, projectName)),
+  resetState: () => set({ ...initialWallState }),
 }));

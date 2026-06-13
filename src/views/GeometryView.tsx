@@ -1,5 +1,6 @@
 import { useWallStore } from '../store/useWallStore';
 import { WallGraphic } from '../components/WallGraphic';
+import type { LShapeOrientation, WallType } from '../types';
 
 export const GeometryView = () => {
   const store = useWallStore();
@@ -29,11 +30,20 @@ export const GeometryView = () => {
             
             <div className="flex flex-col gap-4">
               <div>
+                <label className="label-caps text-slate-500 block mb-1">Project Name</label>
+                <input
+                  type="text"
+                  className="w-full bg-surface border border-border-card rounded-2xl px-3 py-2 text-sm text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                  value={store.projectName}
+                  onChange={(e) => store.setProjectName(e.target.value)}
+                />
+              </div>
+              <div>
                 <label className="label-caps text-slate-500 block mb-1">Wall Type</label>
                 <select 
                   className="w-full bg-surface border border-border-card rounded-2xl px-3 py-2 text-sm text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
-                  value={store.wallType}
-                  onChange={(e) => store.setWallType(e.target.value as any)}
+                    value={store.wallType}
+                    onChange={(e) => store.setWallType(e.target.value as WallType)}
                 >
                   <option value="T-Shape">Cantilever (T-Shape)</option>
                   <option value="L-Shape">Cantilever (L-Shape)</option>
@@ -47,7 +57,7 @@ export const GeometryView = () => {
                   <select 
                     className="w-full bg-surface border border-border-card rounded-2xl px-3 py-2 text-sm text-slate-900 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                     value={store.lShapeOrientation || 'Heel-only'}
-                    onChange={(e) => store.setLShapeOrientation(e.target.value as any)}
+                    onChange={(e) => store.setLShapeOrientation(e.target.value as LShapeOrientation)}
                   >
                     <option value="Heel-only">Heel-only (Soil on Heel)</option>
                     <option value="Toe-only">Toe-only (Soil on Toe)</option>

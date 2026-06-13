@@ -1,13 +1,57 @@
+import { useState } from 'react';
 import { useWallStore } from '../store/useWallStore';
 import { runCalculations } from '../utils/calculationEngine';
 import { CheckCircle, Calculator, FileText, CloudUpload } from 'lucide-react';
 import { WallGraphic } from '../components/WallGraphic';
+import { useProjectSync } from '../contexts/ProjectSyncContext';
+import { useNavigate } from 'react-router-dom';
+import { SaveProjectButton } from '../components/SaveProjectButton';
 
 export const DashboardView = () => {
   const store = useWallStore();
   const results = runCalculations(store);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const navigate = useNavigate();
+  const { isSaving } = useProjectSync();
 
   const { stability, structural } = results;
+
+  const handleDownloadPdf = async () => {
+    try {
+      setIsGeneratingPdf(true);
+
+      const reportDate = new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      }).format(new Date());
+
+      const [{ pdf }, { CalculationReport }] = await Promise.all([
+        import('@react-pdf/renderer'),
+        import('../components/CalculationReport'),
+      ]);
+
+      const blob = await pdf(
+        <CalculationReport
+          state={store}
+          results={results}
+          projectName="RetainCalc Pro Project"
+          designedBy="RetainCalc Pro User"
+          reportDate={reportDate}
+        />
+      ).toBlob();
+
+      const fileDate = new Date().toISOString().slice(0, 10);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `retaining-wall-calculation-report-${fileDate}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
 
   return (
     <div className="max-w-[1280px] mx-auto px-10 py-10">
@@ -150,13 +194,26 @@ export const DashboardView = () => {
           </div>
 
           <div className="flex items-center justify-end gap-4 mt-2 mb-8">
-            <button className="flex items-center gap-2 px-6 py-3 border border-border-card text-slate-700 rounded-2xl hover:bg-slate-50 transition-colors label-caps shadow-sm bg-white">
+            <SaveProjectButton
+              className="flex items-center gap-2 px-6 py-3 border border-border-card text-slate-700 rounded-2xl hover:bg-slate-50 transition-colors label-caps shadow-sm bg-white disabled:opacity-70 disabled:cursor-wait"
+              icon={<CloudUpload className="w-5 h-5 text-slate-500" />}
+            >
+              {isSaving ? 'Saving...' : 'Save Project'}
+            </SaveProjectButton>
+            <button
+              onClick={() => navigate('/projects')}
+              className="flex items-center gap-2 px-6 py-3 border border-border-card text-slate-700 rounded-2xl hover:bg-slate-50 transition-colors label-caps shadow-sm bg-white"
+            >
               <CloudUpload className="w-5 h-5 text-slate-500" />
-              Save to Cloud
+              Load Project
             </button>
-            <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl hover:bg-blue-800 transition-colors label-caps shadow-sm">
+            <button
+              onClick={handleDownloadPdf}
+              disabled={isGeneratingPdf}
+              className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-2xl hover:bg-blue-800 transition-colors label-caps shadow-sm disabled:opacity-70 disabled:cursor-wait"
+            >
               <FileText className="w-5 h-5 text-white/80" />
-              Download PDF Report
+              {isGeneratingPdf ? 'Generating PDF...' : 'Download PDF Report'}
             </button>
           </div>
         </div>

@@ -53,17 +53,17 @@ export const ReinforcementView = () => {
             <h3 className="font-bold text-[#334155] text-[15px]">Phase 1: Stability Analysis (การตรวจสอบความมั่นคง)</h3>
           </div>
           
-          <div className="grid grid-cols-[1fr_1fr] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.18fr_1fr] gap-6">
             <div className="bg-[#e0e7ff] rounded-xl p-8 flex flex-col justify-center gap-8 shadow-sm">
               
               <div className="flex flex-col relative">
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col gap-3 pr-24">
                   <div>
                     <div className="font-bold text-[13px] text-[#1e293b]">Overturning (การพลิกคว่ำ)</div>
                     <div className="text-xs text-[#475569] italic mt-1 font-serif">F.S. = M_stabilizing / M_overturning</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[13px] font-mono text-[#334155]">
+                  <div className="text-left">
+                    <div className="text-[12px] xl:text-[13px] font-mono text-[#334155] leading-relaxed break-words">
                       = {results.stability.ResistingMoment.toLocaleString(undefined, {maximumFractionDigits:1})} / {results.stability.OverturningMoment.toLocaleString(undefined, {maximumFractionDigits:1})} = {results.stability.FS_overturning.toFixed(2)} {'>'} 2.0
                     </div>
                   </div>
@@ -76,13 +76,13 @@ export const ReinforcementView = () => {
               </div>
 
               <div className="flex flex-col relative">
-                <div className="flex justify-between items-start">
+                <div className="flex flex-col gap-3 pr-24">
                   <div>
                     <div className="font-bold text-[13px] text-[#1e293b]">Sliding (การเลื่อนไถล)</div>
                     <div className="text-xs text-[#475569] italic mt-1 font-serif">F.S. = ΣF_resisting / ΣF_driving</div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-[13px] font-mono text-[#334155]">
+                  <div className="text-left">
+                    <div className="text-[12px] xl:text-[13px] font-mono text-[#334155] leading-relaxed break-words">
                       = {(store.soilProperties.frictionCoefficient * results.loads.SigmaW).toLocaleString(undefined, {maximumFractionDigits:0})} / {results.stability.TotalHorizontalForce.toLocaleString(undefined, {maximumFractionDigits:0})} = {results.stability.FS_sliding.toFixed(2)} {'>'} 1.5
                     </div>
                   </div>
@@ -96,9 +96,9 @@ export const ReinforcementView = () => {
 
             </div>
 
-            <div className="border border-[#e2e8f0] rounded-xl flex items-center justify-center bg-white p-6 shadow-sm min-h-[250px]">
+            <div className="border border-[#e2e8f0] rounded-xl flex items-center justify-center bg-white p-4 shadow-sm min-h-[360px]">
               {/* Custom SVG for Phase 1 */}
-              <svg viewBox="0 0 300 200" className="w-full h-full max-w-[280px]">
+              <svg viewBox="45 -5 230 230" className="w-full h-full">
                 <defs>
                   <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
                     <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" />
@@ -119,6 +119,9 @@ export const ReinforcementView = () => {
                 <line x1="180" y1="110" x2="205" y2="110" stroke="#3b82f6" markerEnd="url(#arrow-blue)" />
                 <line x1="180" y1="140" x2="215" y2="140" stroke="#3b82f6" markerEnd="url(#arrow-blue)" />
                 <text x="230" y="130" className="text-[10px] font-sans text-[#334155]">Pa</text>
+                <text x="228" y="142" className="text-[8px] font-mono fill-[#2563eb]">
+                  {results.loads.Pa.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </text>
                 {/* Bearing Pressure */}
                 <polygon points="100,150 180,150 180,165 100,175" fill="#faf5ff" stroke="#a855f7" strokeWidth="1" />
                 <line x1="105" y1="170" x2="105" y2="155" stroke="#a855f7" markerStart="url(#arrow-purple-up)" />
@@ -126,6 +129,18 @@ export const ReinforcementView = () => {
                 <line x1="175" y1="160" x2="175" y2="155" stroke="#a855f7" markerStart="url(#arrow-purple-up)" />
                 <text x="100" y="190" className="text-[9px] font-sans text-[#334155]">q_max</text>
                 <text x="170" y="190" className="text-[9px] font-sans text-[#334155]">q_min</text>
+                <text x="96" y="198" className="text-[8px] font-mono fill-[#7c3aed]">
+                  {results.stability.f_max.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </text>
+                <text x="166" y="198" className="text-[8px] font-mono fill-[#7c3aed]">
+                  {results.stability.f_min.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                </text>
+                <text x="86" y="30" className="text-[8px] font-mono fill-[#475569]">
+                  FS_ot = {results.stability.FS_overturning.toFixed(2)}
+                </text>
+                <text x="86" y="38" className="text-[8px] font-mono fill-[#475569]">
+                  FS_sl = {results.stability.FS_sliding.toFixed(2)}
+                </text>
               </svg>
             </div>
           </div>
@@ -141,9 +156,9 @@ export const ReinforcementView = () => {
           </div>
           
           <div className="grid grid-cols-[1fr_1.5fr] gap-6">
-            <div className="border border-[#e2e8f0] rounded-xl flex items-center justify-center bg-white p-6 shadow-sm min-h-[250px]">
+            <div className="border border-[#e2e8f0] rounded-xl flex items-center justify-center bg-white p-4 shadow-sm min-h-[360px]">
               {/* Custom SVG for Phase 2 */}
-              <svg viewBox="0 0 200 200" className="w-full h-full max-w-[180px]">
+              <svg viewBox="40 20 120 160" className="w-full h-full">
                 <defs>
                   <marker id="arrow-red" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
                     <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
@@ -207,9 +222,9 @@ export const ReinforcementView = () => {
                 <div>A_s,req = {(results.structural.toe?.A_s ?? 0).toFixed(2)} cm²/m</div>
               </div>
             </div>
-            <div className="border border-[#e2e8f0] rounded-xl flex items-center justify-center bg-white p-6 shadow-sm min-h-[200px]">
+            <div className="border border-[#e2e8f0] rounded-xl flex items-center justify-center bg-white p-4 shadow-sm min-h-[360px]">
                {/* Custom SVG for Phase 3 */}
-               <svg viewBox="0 0 250 150" className="w-full h-full max-w-[220px]">
+               <svg viewBox="20 20 200 120" className="w-full h-full">
                 <defs>
                   <marker id="arrow-up" viewBox="0 0 10 10" refX="5" refY="2" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
                     <path d="M 0 10 L 5 0 L 10 10 z" fill="#64748b" />

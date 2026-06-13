@@ -1,5 +1,6 @@
 import { useWallStore } from '../store/useWallStore';
 import { Layers, Trash2, Plus, Info } from 'lucide-react';
+import type { SoilLayer, SoilProperties } from '../types';
 
 
 export const SoilPropertiesView = () => {
@@ -9,13 +10,13 @@ export const SoilPropertiesView = () => {
   // but since we are changing the engine next, we will just use the current layers.
   // const results = runCalculations(store);
 
-  const handleGlobalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const updateGlobalField = <K extends keyof SoilProperties>(field: K, value: SoilProperties[K]) => {
     store.updateSoilProperties({
-      [e.target.name]: e.target.type === 'number' ? parseFloat(e.target.value) || 0 : e.target.value,
-    });
+      [field]: value,
+    } as Partial<SoilProperties>);
   };
 
-  const handleLayerChange = (id: string, field: string, value: any) => {
+  const handleLayerChange = <K extends keyof SoilLayer>(id: string, field: K, value: SoilLayer[K]) => {
     store.updateSoilLayer(id, { [field]: value });
   };
 
@@ -242,13 +243,13 @@ export const SoilPropertiesView = () => {
                 <label className="block text-[12px] font-medium text-[#475569] mb-2">Tension Crack Assumption (ดินเหนียว)</label>
                 <div className="flex bg-white border border-[#cbd5e1] rounded-xl overflow-hidden p-1">
                   <button
-                    onClick={() => handleGlobalChange({ target: { name: 'tensionCrackAssumption', value: 'ignore_negative' } } as any)}
+                    onClick={() => updateGlobalField('tensionCrackAssumption', 'ignore_negative')}
                     className={`flex-1 py-2 text-[12px] font-medium rounded-lg transition-colors ${store.soilProperties.tensionCrackAssumption === 'ignore_negative' ? 'bg-[#4f46e5] text-white' : 'text-[#64748b] hover:bg-slate-50'}`}
                   >
                     Ignore Negative Pressure (Standard)
                   </button>
                   <button
-                    onClick={() => handleGlobalChange({ target: { name: 'tensionCrackAssumption', value: 'include_negative' } } as any)}
+                    onClick={() => updateGlobalField('tensionCrackAssumption', 'include_negative')}
                     className={`flex-1 py-2 text-[12px] font-medium rounded-lg transition-colors ${store.soilProperties.tensionCrackAssumption === 'include_negative' ? 'bg-[#4f46e5] text-white' : 'text-[#64748b] hover:bg-slate-50'}`}
                   >
                     Include Negative Pressure
@@ -260,13 +261,13 @@ export const SoilPropertiesView = () => {
                 <label className="block text-[12px] font-medium text-[#475569] mb-2">Stratigraphy Depth Boundary</label>
                 <div className="flex bg-white border border-[#cbd5e1] rounded-xl overflow-hidden p-1">
                   <button
-                    onClick={() => handleGlobalChange({ target: { name: 'layerClipping', value: 'clip_to_wall' } } as any)}
+                    onClick={() => updateGlobalField('layerClipping', 'clip_to_wall')}
                     className={`flex-1 py-2 text-[12px] font-medium rounded-lg transition-colors ${store.soilProperties.layerClipping === 'clip_to_wall' ? 'bg-[#4f46e5] text-white' : 'text-[#64748b] hover:bg-slate-50'}`}
                   >
                     Clip to Wall Depth
                   </button>
                   <button
-                    onClick={() => handleGlobalChange({ target: { name: 'layerClipping', value: 'no_clip' } } as any)}
+                    onClick={() => updateGlobalField('layerClipping', 'no_clip')}
                     className={`flex-1 py-2 text-[12px] font-medium rounded-lg transition-colors ${store.soilProperties.layerClipping === 'no_clip' ? 'bg-[#4f46e5] text-white' : 'text-[#64748b] hover:bg-slate-50'}`}
                   >
                     Extend Beyond Wall
