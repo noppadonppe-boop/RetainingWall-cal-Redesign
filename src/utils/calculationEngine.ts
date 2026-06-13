@@ -1,4 +1,5 @@
 import type { WallState } from '../types';
+import { getEffectiveGeometry } from './geometry';
 
 export const CONCRETE_UNIT_WEIGHT = 2400; // kg/m3
 
@@ -52,19 +53,13 @@ export function selectRebar(requiredAs: number, minSpacing = 10, maxSpacing = 30
 
 export function runCalculations(state: WallState) {
   const { geometry, soilProperties, loads, materials, wallType, lShapeOrientation } = state;
-  const H = geometry.totalHeight;
-  const baseThickness = geometry.baseThickness || 0.4;
+  const effectiveGeometry = getEffectiveGeometry(geometry, wallType, lShapeOrientation);
+  const H = effectiveGeometry.totalHeight;
+  const baseThickness = effectiveGeometry.baseThickness || 0.4;
   const stemHeight = H - baseThickness;
-  
-  let toe = geometry.toeWidth;
-  let heel = geometry.heelWidth;
-  
-  if (wallType === 'L-Shape') {
-    if (lShapeOrientation === 'Heel-only') toe = 0;
-    else if (lShapeOrientation === 'Toe-only') heel = 0;
-  }
-  
-  const actualBaseWidth = toe + geometry.stemThickness + heel;
+  const toe = effectiveGeometry.activeToeWidth;
+  const heel = effectiveGeometry.activeHeelWidth;
+  const actualBaseWidth = effectiveGeometry.actualBaseWidth;
   
   // 1. Multi-Layer Earth Pressure Analysis
   let Pa = 0;
@@ -195,7 +190,7 @@ export function runCalculations(state: WallState) {
   }
 
   const W_base = actualBaseWidth * baseThickness * CONCRETE_UNIT_WEIGHT;
-  const W_stem = geometry.stemThickness * stemHeight * CONCRETE_UNIT_WEIGHT;
+  const W_stem = effectiveGeometry.bottomStemWidth * stemHeight * CONCRETE_UNIT_WEIGHT;
   
   let W_soil_slope = 0;
   let x_soil_slope = 0;
@@ -204,15 +199,15 @@ export function runCalculations(state: WallState) {
     // Use top layer unit weight for the slope
     const topGamma = soilProperties.layers[0]?.unitWeight || 1800;
     W_soil_slope = 0.5 * heel * slopeHeight * topGamma;
-    x_soil_slope = toe + geometry.stemThickness + (2/3) * heel;
+    x_soil_slope = toe + effectiveGeometry.bottomStemWidth + (2/3) * heel;
   }
   
   const SigmaW = W_base + W_stem + W_soil_heel + W_soil_slope;
   
   // 2. Stability Checks
   const x_base = actualBaseWidth / 2;
-  const x_stem = toe + geometry.stemThickness / 2;
-  const x_soil_heel = toe + geometry.stemThickness + heel / 2;
+  const x_stem = toe + effectiveGeometry.bottomStemWidth / 2;
+  const x_soil_heel = toe + effectiveGeometry.bottomStemWidth + heel / 2;
   
   const ResistingMoment = (W_base * x_base) + (W_stem * x_stem) + (W_soil_heel * x_soil_heel) + (W_soil_slope * x_soil_slope);
   const OverturningMoment = overturningMomentFromEarth + (P_surcharge * P_surcharge_y) + (P_hydro * P_hydro_y);
@@ -255,16 +250,16 @@ export function runCalculations(state: WallState) {
   const V_u_stem = 1.7 * Pa_stem + 1.7 * P_sur_stem + 1.7 * P_hydro_stem;
   const M_u_stem = 1.7 * (Pa_stem * stemHeight / 3) + 1.7 * (P_sur_stem * stemHeight / 2) + 1.7 * (P_hydro_stem * stemHeight / 3);
   
-  const d_stem_mm = (geometry.stemThickness * 1000) - 50; 
+  const d_stem_mm = (effectiveGeometry.bottomStemWidth * 1000) - 50; 
   const phi_Vc_stem = phi_v * 0.29 * Math.sqrt(fc) * d_stem_mm * 10; 
   const isStemShearPass = V_u_stem <= phi_Vc_stem;
   
   let As_stem = (M_u_stem * 100) / (phi_f * fy * 0.9 * (d_stem_mm / 10)); 
-  const As_min_stem = 0.0018 * 100 * (geometry.stemThickness * 100);
+  const As_min_stem = 0.0018 * 100 * (effectiveGeometry.bottomStemWidth * 100);
   As_stem = Math.max(As_stem, As_min_stem);
   const rebar_stem = selectRebar(As_stem);
   
-  const As_dist_stem = 0.0020 * 100 * (geometry.stemThickness * 100);
+  const As_dist_stem = 0.0020 * 100 * (effectiveGeometry.bottomStemWidth * 100);
   const rebar_dist_stem = selectRebar(As_dist_stem, 15, 30);
   
   // HEEL

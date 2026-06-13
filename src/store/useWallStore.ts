@@ -9,6 +9,7 @@ import type {
   WallGeometry,
   WallState,
 } from '../types';
+import { normalizeGeometry } from '../utils/geometry';
 
 export interface WallStore extends WallState {
   setProjectName: (projectName: string) => void;
@@ -34,14 +35,18 @@ export const initialWallState: WallState = {
   wallType: 'T-Shape',
   lShapeOrientation: null,
   hasShearKey: false,
-  geometry: {
+  geometry: normalizeGeometry({
     totalHeight: 4.0,
+    frontFillHeight: 1.0,
+    waterTableHeight: 2.0,
+    topStemWidth: 0.25,
+    bottomStemWidth: 0.4,
+    frontHeelWidth: 0.5,
     baseWidth: 2.5,
-    baseThickness: 0.4,
-    stemThickness: 0.3,
-    toeWidth: 0.8,
-    heelWidth: 1.4,
-  },
+    baseThickness: 0.5,
+    shearKeyDepth: 0.4,
+    shearKeyWidth: 0.3,
+  }),
   soilProperties: {
     layers: [
       {
@@ -87,10 +92,14 @@ export const initialWallState: WallState = {
 const mergeWallState = (state: WallState, incoming: Partial<WallState>): WallState => ({
   ...state,
   ...incoming,
-  geometry: {
-    ...state.geometry,
-    ...(incoming.geometry ?? {}),
-  },
+  geometry: normalizeGeometry(
+    {
+      ...state.geometry,
+      ...(incoming.geometry ?? {}),
+    },
+    incoming.wallType ?? state.wallType,
+    incoming.lShapeOrientation ?? state.lShapeOrientation,
+  ),
   soilProperties: {
     ...state.soilProperties,
     ...(incoming.soilProperties ?? {}),
@@ -131,7 +140,11 @@ export const buildWallStateFromSections = (
   wallType: sections.geometryMenu.wallType,
   lShapeOrientation: sections.geometryMenu.lShapeOrientation,
   hasShearKey: sections.geometryMenu.hasShearKey,
-  geometry: sections.geometryMenu.geometry,
+  geometry: normalizeGeometry(
+    sections.geometryMenu.geometry,
+    sections.geometryMenu.wallType,
+    sections.geometryMenu.lShapeOrientation,
+  ),
   soilProperties: sections.soilMenu,
   loads: sections.loadsMenu,
   materials: sections.materialsMenu,
@@ -141,12 +154,26 @@ export const buildWallStateFromSections = (
 export const useWallStore = create<WallStore>((set) => ({
   ...initialWallState,
   setProjectName: (projectName) => set({ projectName }),
-  setWallType: (wallType) => set({ wallType }),
-  setLShapeOrientation: (lShapeOrientation) => set({ lShapeOrientation }),
+  setWallType: (wallType) =>
+    set((state) => ({
+      wallType,
+      geometry: normalizeGeometry(state.geometry, wallType, state.lShapeOrientation),
+    })),
+  setLShapeOrientation: (lShapeOrientation) =>
+    set((state) => ({
+      lShapeOrientation,
+      geometry: normalizeGeometry(state.geometry, state.wallType, lShapeOrientation),
+    })),
   setHasShearKey: (hasShearKey) => set({ hasShearKey }),
   setActiveTab: (activeTab) => set({ activeTab }),
   updateGeometry: (geometry) =>
-    set((state) => ({ geometry: { ...state.geometry, ...geometry } })),
+    set((state) => ({
+      geometry: normalizeGeometry(
+        { ...state.geometry, ...geometry },
+        state.wallType,
+        state.lShapeOrientation,
+      ),
+    })),
   updateSoilProperties: (soilProperties) =>
     set((state) => ({
       soilProperties: {

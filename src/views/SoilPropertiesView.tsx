@@ -1,14 +1,11 @@
 import { useWallStore } from '../store/useWallStore';
-import { Layers, Trash2, Plus, Info } from 'lucide-react';
+import { Trash2, Plus, Info } from 'lucide-react';
 import type { SoilLayer, SoilProperties } from '../types';
+import { SoilProfileVisual } from '../components/SoilProfileVisual';
 
 
 export const SoilPropertiesView = () => {
   const store = useWallStore();
-  
-  // We need to pass the updated store to calculation engine to get live results, 
-  // but since we are changing the engine next, we will just use the current layers.
-  // const results = runCalculations(store);
 
   const updateGlobalField = <K extends keyof SoilProperties>(field: K, value: SoilProperties[K]) => {
     store.updateSoilProperties({
@@ -20,103 +17,18 @@ export const SoilPropertiesView = () => {
     store.updateSoilLayer(id, { [field]: value });
   };
 
-  // Render SVG Stratigraphy
-  const renderStratigraphy = () => {
-    const layers = store.soilProperties.layers;
-    let totalDepth = layers.reduce((sum, l) => sum + l.thickness, 0);
-    // Ensure minimum depth for drawing scale
-    if (totalDepth < 5) totalDepth = 5;
-
-    const viewBoxHeight = 400;
-    const viewBoxWidth = 250;
-    const scaleY = viewBoxHeight / totalDepth;
-
-    let currentY = 0;
-    let cumulativeDepth = 0;
-
-    return (
-      <svg viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`} className="w-full h-full rounded-xl" preserveAspectRatio="none">
-        <defs>
-          <pattern id="sand-pattern" width="10" height="10" patternUnits="userSpaceOnUse">
-            <circle cx="2" cy="2" r="1" fill="#d4d4d8" />
-            <circle cx="8" cy="8" r="0.5" fill="#d4d4d8" />
-            <circle cx="4" cy="7" r="1" fill="#e4e4e7" />
-          </pattern>
-          <pattern id="clay-pattern" width="20" height="10" patternUnits="userSpaceOnUse">
-            <line x1="0" y1="5" x2="20" y2="5" stroke="#d4d4d8" strokeWidth="0.5" />
-            <line x1="10" y1="0" x2="10" y2="10" stroke="#d4d4d8" strokeWidth="0.5" strokeDasharray="2 2" />
-          </pattern>
-        </defs>
-
-        {/* Base background */}
-        <rect width="100%" height="100%" fill="#f8fafc" />
-
-        {layers.map((layer, index) => {
-          const height = layer.thickness * scaleY;
-          const y = currentY;
-          currentY += height;
-          
-          const isSand = layer.soilType.toLowerCase().includes('sand');
-          const fillColor = isSand ? '#e7e5e4' : '#a8a29e';
-          const patternId = isSand ? 'url(#sand-pattern)' : 'url(#clay-pattern)';
-
-          return (
-            <g key={layer.id}>
-              <rect x="30" y={y} width={viewBoxWidth - 30} height={height} fill={fillColor} />
-              <rect x="30" y={y} width={viewBoxWidth - 30} height={height} fill={patternId} />
-              
-              {/* Layer Boundary Line */}
-              {index > 0 && (
-                <line x1="30" y1={y} x2={viewBoxWidth} y2={y} stroke="#78716c" strokeWidth="1" strokeDasharray="4 2" />
-              )}
-
-              {/* Depth Label */}
-              {index === 0 && (
-                <text x="25" y={10} fontSize="10" textAnchor="end" fill="#64748b" fontFamily="monospace">0.0m</text>
-              )}
-              
-              {/* Bottom Depth Label */}
-              <text x="25" y={y + height + 3} fontSize="10" textAnchor="end" fill="#64748b" fontFamily="monospace">
-                -{ (cumulativeDepth + layer.thickness).toFixed(1) }m
-              </text>
-
-              {/* Center Label Badge */}
-              <g transform={`translate(${30 + (viewBoxWidth - 30)/2}, ${y + height/2})`}>
-                <rect x="-40" y="-12" width="80" height="24" rx="12" fill="white" fillOpacity="0.8" />
-                <text x="0" y="3" fontSize="12" fontWeight="bold" textAnchor="middle" fill="#475569" className="font-sans">
-                  {index + 1}. {layer.name.split(' ').pop()}
-                </text>
-              </g>
-
-              {/* If GWT is here (mock for first layer boundary) */}
-              {index === 0 && store.loads.hydrostaticActive && (
-                <g transform={`translate(30, ${y + height})`}>
-                  <line x1="0" y1="0" x2={viewBoxWidth - 30} y2="0" stroke="#3b82f6" strokeWidth="2" />
-                  <polygon points="5,0 10,-8 0,-8" fill="none" stroke="#3b82f6" strokeWidth="1.5" />
-                  <text x={viewBoxWidth - 60} y="-5" fontSize="10" fill="#3b82f6" fontWeight="bold">GWT : ▽</text>
-                </g>
-              )}
-              
-              {/* Update cumulative depth */}
-              <text style={{display: 'none'}}>{cumulativeDepth += layer.thickness}</text>
-            </g>
-          );
-        })}
-      </svg>
-    );
-  };
-
   return (
-    <div className="max-w-[1280px] mx-auto px-6 lg:px-10 py-10">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-[#1e293b] font-sans">Soil Properties Configuration</h1>
-        <p className="text-[13px] text-[#64748b] mt-2 font-sans max-w-3xl leading-relaxed">
-          Define stratigraphy layers and mechanical parameters for the retaining structure analysis. / 
-          กำหนดชั้นดินและพารามิเตอร์ทางกลสำหรับการวิเคราะห์โครงสร้างกันดิน
-        </p>
+    <div className="max-w-[1280px] mx-auto px-10 py-10">
+      <header className="mb-8 flex justify-between items-end border-b border-border-card pb-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 font-sans">Soil Properties</h1>
+          <p className="text-sm text-slate-500 mt-1 font-sans">
+            Configure soil layers and engineering assumptions for the retaining wall.
+          </p>
+        </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.45fr_1fr] gap-8">
         
         {/* Left Column: Input Forms */}
         <div className="flex flex-col gap-6">
@@ -280,20 +192,12 @@ export const SoilPropertiesView = () => {
 
         {/* Right Column: Visualization */}
         <div className="h-full">
-          <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-sm sticky top-8 flex flex-col min-h-[600px]">
-            <h3 className="text-lg font-bold text-[#1e293b] mb-6 flex items-center gap-2">
-              <Layers className="w-5 h-5 text-[#4f46e5]" />
-              Live Stratigraphy
-            </h3>
-            
-            <div className="flex-1 w-full border border-[#cbd5e1] rounded-xl overflow-hidden bg-white">
-              {renderStratigraphy()}
-            </div>
-
-            <div className="mt-6 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-4 flex items-start gap-3">
+          <div className="sticky top-8 flex flex-col gap-4">
+            <SoilProfileVisual />
+            <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-4 flex items-start gap-3">
               <Info className="w-5 h-5 text-[#64748b] shrink-0 mt-0.5" />
               <p className="text-[12px] text-[#475569] leading-relaxed">
-                Diagram updates automatically as parameters change. Water table is indicated if hydrostatic pressure is active in the Loads menu.
+                The 2D soil profile shows front and back elevations based on the current geometry height, front fill level, and configured soil layers.
               </p>
             </div>
           </div>

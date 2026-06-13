@@ -5,8 +5,15 @@ export type LShapeOrientation = 'Heel-only' | 'Toe-only' | null;
 
 export interface WallGeometry {
   totalHeight: number;
+  frontFillHeight: number;
+  waterTableHeight: number;
+  topStemWidth: number;
+  bottomStemWidth: number;
+  frontHeelWidth: number;
   baseWidth: number;
   baseThickness: number;
+  shearKeyDepth: number;
+  shearKeyWidth: number;
   stemThickness: number;
   toeWidth: number;
   heelWidth: number;
