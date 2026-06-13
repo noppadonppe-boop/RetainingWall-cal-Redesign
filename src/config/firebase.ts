@@ -12,7 +12,10 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 };
 
-export const APP_NAME = import.meta.env.VITE_APP_NAME || 'RetainingWall-cal';
+export const APP_NAME =
+  import.meta.env.VITE_FIREBASE_APP_NAME ||
+  import.meta.env.VITE_APP_NAME ||
+  'RetainingWall-cal-Redesign';
 
 const firebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 

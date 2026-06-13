@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "rc-design-ecosystem"
+  },
+  "targets": {
+    "rc-design-ecosystem": {
+      "hosting": {
+        "site-01": [
+          "retainingwall-cal-redesign"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
